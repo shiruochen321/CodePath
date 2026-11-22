@@ -1,0 +1,278 @@
+@@ Chapter 1 - Getting Started: variables, data types, printf/scanf, arithmetic
+@MODULE 1
+@CHAPTER Getting Started
+@TOPIC Variables, Types & I/O
+@BLURB The building blocks of every C program: `main`, variables, data types, `printf` / `scanf` and arithmetic.
+@COLOR 43,179,163
+
+@LESSON Your first program
+@TEXT
+Every C program starts running at `main`. The lines before it pull in libraries: `#include <stdio.h>` gives you `printf` and `scanf`.
+
+- `int main(void)` - the entry point. It returns an `int` to the operating system.
+- `printf(...)` - prints text. `\n` moves to a new line.
+- `return 0;` - tells the OS the program finished **successfully**.
+- Every statement ends with a semicolon `;`. Blocks of code live inside `{ }`.
+
+To build and run from a terminal: `gcc hello.c -o hello` then `./hello`.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    printf("Hello, C!\n");
+    printf("Shift: %d\n", 1);
+    return 0;
+}
+@ANALOGY
+`main` is the front door of your program. The operating system always walks in through it, and `return 0` is you saying "all done, everything went fine" on the way out.
+@TIP
+Forgetting `#include <stdio.h>` or a `;` are the most common compile errors in the first coding exam. Read the **first** error message the compiler gives you, the rest are often knock-on errors.
+
+@LESSON Variables & data types
+@TEXT
+A variable is a named piece of memory. You must declare its **type** before using it.
+
+- `int` - whole numbers, e.g. `int students = 40;`
+- `float` / `double` - decimals. `double` has about twice the precision.
+- `char` - a single character in single quotes: `char grade = 'A';`
+- `sizeof(type)` tells you how many bytes it uses. `char` is always 1.
+
+A variable that is declared but not given a value holds **garbage** - whatever was in that memory before. Always initialise.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int students = 40;
+    double weightKg = 12.75;
+    char zone = 'B';
+
+    printf("Students: %d\n", students);
+    printf("Weight: %.2f kg\n", weightKg);
+    printf("Zone: %c\n", zone);
+    printf("int uses %zu bytes\n", sizeof(int));
+    return 0;
+}
+@ANALOGY
+Variables are labelled boxes. The **type** decides the size and shape of the box: an `int` box holds a whole number, a `double` box can hold 12.75, a `char` box holds exactly one letter.
+@TIP
+Variable names may contain letters, digits and `_`, but cannot start with a digit and cannot be a keyword like `int` or `return`. C is case sensitive: `Stock` and `stock` are different.
+
+@LESSON printf & scanf
+@TEXT
+`printf` uses **format specifiers** as placeholders:
+
+- `%d` int, `%f` float/double, `%.2f` two decimals, `%c` char, `%s` string
+- `scanf` reads input into variables. It needs the **address** of the variable, so you write `&qty`.
+- For a `double`, `scanf` needs `%lf`, while `printf` accepts `%f`.
+
+A mismatched specifier (e.g. `%d` for a float) is not a compile error, it just prints rubbish.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int qty;
+    double price;
+
+    printf("Quantity: ");
+    scanf("%d", &qty);
+    printf("Unit price: ");
+    scanf("%lf", &price);
+
+    printf("Order total: %.2f\n", qty * price);
+    return 0;
+}
+@ANALOGY
+A format string is a form with blanks: "Room `%c`, `%d` seats". `printf` fills in the blanks in order. `scanf` is like posting a letter: you must give it the **address** (`&`) where the answer should be delivered.
+@TIP
+Exam favourite: `scanf("%d", qty);` without `&` compiles (with a warning) but crashes or corrupts memory. Strings (`char name[20]`) are the exception: an array name is already an address, so no `&`.
+
+@LESSON Arithmetic, division & casting
+@TEXT
+Operators: `+ - * /` and `%` (remainder, ints only).
+
+- **Integer division** throws away the fraction: `17 / 5` is `3`.
+- `17 % 5` is `2` - the remainder.
+- If either side is a float/double, the division is done in floating point: `17 / 5.0` is `3.4`.
+- A **cast** converts a value: `(double)total / count`.
+- Shortcuts: `x += 3;` `x++;` `x--;`
+- Constants: `const int MAX = 50;` or `#define MAX 50`
+@CODE
+#include <stdio.h>
+#define PER_TEAM 5
+
+int main(void) {
+    int students = 17;
+    int teams = students / PER_TEAM;  // 3
+    int left = students % PER_TEAM;  // 2
+    double avg = (double)students / 4;  // 4.25
+
+    printf("%d teams, %d left over\n", teams, left);
+    printf("Average per lab: %.2f\n", avg);
+    return 0;
+}
+@ANALOGY
+17 students, teams of 5: you can make **3** full teams (`/`) and **2** students are left over (`%`). Nobody forms 0.4 of a team - that is exactly what integer division does.
+@TIP
+`float avg = total / count;` with two ints still does integer division **before** the assignment. Cast one side first: `(float)total / count`.
+
+@LAB Splitting a class into teams
+@INTRO
+17 students must be split into teams of 5 for a lab session, and each student pays 2.50 for materials. Step through the program and watch each variable get its value. Notice what integer division does on line 6.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int students = 17;
+    int perTeam = 5;
+    int teams = students / perTeam;
+    int leftover = students % perTeam;
+    float price = 2.5f;
+    float total = students * price;
+    printf("Teams: %d\n", teams);
+    printf("Leftover: %d\n", leftover);
+    printf("Total: %.2f\n", total);
+    return 0;
+}
+@STEP 3 | | students=0; teams=0; leftover=0 | | Execution always begins at `main`. No variables exist yet.
+@STEP 4 | students=17 | students=17; teams=0; leftover=0 | | `students` is declared as an `int` and initialised to 17.
+@STEP 5 | students=17; perTeam=5 | students=17; teams=0; leftover=0 | | `perTeam` holds the team size.
+@STEP 6 | students=17; perTeam=5; teams=3 | students=17; teams=3; leftover=0 | | **Integer division**: 17 / 5 = 3.4 but both are ints, so the .4 is discarded. 3 full teams.
+@STEP 7 | students=17; perTeam=5; teams=3; leftover=2 | students=17; teams=3; leftover=2 | | `%` gives the remainder: 17 = 3 x 5 + **2**. Two students are left over.
+@STEP 8 | students=17; perTeam=5; teams=3; leftover=2; price=2.50 | students=17; teams=3; leftover=2 | | The `f` suffix makes `2.5f` a float literal.
+@STEP 9 | students=17; perTeam=5; teams=3; leftover=2; price=2.50; total=42.50 | students=17; teams=3; leftover=2 | | `int * float` - the int is promoted to float, so the result keeps its decimals: 42.5.
+@STEP 10 | students=17; perTeam=5; teams=3; leftover=2; price=2.50; total=42.50 | students=17; teams=3; leftover=2 | Teams: 3\n | `%d` is replaced by the value of `teams`.
+@STEP 11 | students=17; perTeam=5; teams=3; leftover=2; price=2.50; total=42.50 | students=17; teams=3; leftover=2 | Leftover: 2\n | Same again for `leftover`.
+@STEP 12 | students=17; perTeam=5; teams=3; leftover=2; price=2.50; total=42.50 | students=17; teams=3; leftover=2 | Total: 42.50\n | `%.2f` prints a float with exactly two decimal places.
+@STEP 13 | students=17; perTeam=5; teams=3; leftover=2; price=2.50; total=42.50 | students=17; teams=3; leftover=2 | | `return 0` ends `main` and reports success to the operating system.
+
+@Q MCQ
+@PROMPT
+Which format specifier must `scanf` use to read into a `double`?
+@OPT `%lf`
+@OPT `%f`
+@OPT `%d`
+@OPT `%c`
+@ANSWER 0
+@EXPLAIN
+`scanf` needs `%lf` for a `double` (and `%f` for a `float`), because it writes into memory and must know the exact size. `printf` is more relaxed: `%f` prints both.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a = 7, b = 2;
+printf("%d", a / b);
+@OPT 3
+@OPT 3.5
+@OPT 3.500000
+@OPT 4
+@ANSWER 0
+@EXPLAIN
+Both operands are `int`, so `/` is integer division and the fraction is thrown away: 7 / 2 = 3. It does not round up.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+printf("%d %d", 17 % 5, 5 % 17);
+@OPT 2 5
+@OPT 3 0
+@OPT 2 0
+@OPT 3 5
+@ANSWER 0
+@EXPLAIN
+17 = 3 x 5 + **2**, so `17 % 5` is 2. 5 is smaller than 17, so 5 = 0 x 17 + **5** and `5 % 17` is 5.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+float x = 7 / 2;
+printf("%.1f", x);
+@OPT 3.0
+@OPT 3.5
+@OPT 3
+@OPT 4.0
+@ANSWER 0
+@EXPLAIN
+`7 / 2` is evaluated first using integers (= 3). Only then is 3 stored in the float, giving 3.0. Write `7 / 2.0f` or `(float)7 / 2` to get 3.5.
+
+@Q MCQ
+@PROMPT
+Why do we write `&qty` in `scanf("%d", &qty);`?
+@OPT `scanf` needs the address of `qty` so it can store the input there
+@OPT `&` converts the input text to an integer
+@OPT It makes `qty` a constant
+@OPT It is optional style, `scanf("%d", qty)` works the same
+@ANSWER 0
+@EXPLAIN
+C passes arguments by value. To let `scanf` change your variable you pass its **address** with `&`. Without it, `scanf` writes to a random memory location.
+
+@Q FILL
+@PROMPT
+Complete the format string so `cost` (a double) is printed with exactly 2 decimal places:  `printf("Cost: ___\n", cost);`
+@ANSWER %.2f | %.2lf
+@EXPLAIN
+`%.2f` means "floating-point, 2 digits after the decimal point". 3.14159 would print as 3.14.
+
+@Q BUG
+@PROMPT
+This program should read a number of seats and print it back. Which line has the bug?
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int seats;
+    printf("Enter seats: ");
+    scanf("%d", seats);
+    printf("You entered %d\n", seats);
+    return 0;
+}
+@ANSWER 6
+@EXPLAIN
+`scanf` needs the address of the variable: `scanf("%d", &seats);`. Passing `seats` itself hands `scanf` a garbage value to use as an address.
+
+@Q MCQ
+@PROMPT
+What is `sizeof(char)` in C?
+@OPT 1 - guaranteed by the C standard
+@OPT 2
+@OPT 4
+@OPT It depends on the keyboard layout
+@ANSWER 0
+@EXPLAIN
+`sizeof` measures in units of `char`, so `sizeof(char)` is always 1. `int` is typically 4 bytes and `double` 8, but those can vary between platforms.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int i = 5;
+i += 3;
+i++;
+printf("%d", i);
+@OPT 9
+@OPT 8
+@OPT 6
+@OPT 15
+@ANSWER 0
+@EXPLAIN
+5 + 3 = 8, then `i++` adds one more: 9.
+
+@Q FILL
+@PROMPT
+`total` and `count` are both `int`. Fill the gap so the division is done with decimals:  `double avg = ___ total / count;`
+@ANSWER (double) | (float)
+@EXPLAIN
+Casting one operand, `(double)total / count`, forces floating-point division. Casting the whole result, `(double)(total / count)`, is too late - the fraction is already gone.
+
+@Q MCQ
+@PROMPT
+Which of these is a **valid** C variable name?
+@OPT `seat_count`
+@OPT `2seats`
+@OPT `seat-count`
+@OPT `int`
+@ANSWER 0
+@EXPLAIN
+Names can use letters, digits and underscores but cannot start with a digit (`2seats`), cannot contain `-` (that is the minus operator) and cannot be a keyword (`int`).

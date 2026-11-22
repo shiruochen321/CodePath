@@ -1,0 +1,292 @@
+@@ Chapter 4 - Arrays & Strings
+@MODULE 4
+@CHAPTER Arrays & Strings
+@TOPIC 1D, 2D arrays & C strings
+@BLURB Store many values under one name. Learn 1D and 2D arrays, the standard array algorithms (sum, max, search) and C strings as `char` arrays.
+@COLOR 76,154,255
+
+@LESSON Arrays: numbered boxes
+@TEXT
+An array stores many values of the **same type** in one block of memory.
+
+- Declare with a size: `int marks[5];`
+- Initialise with braces: `int marks[5] = {6, 2, 9, 4, 1};` - missing values become 0.
+- Elements are numbered from **0** to **size - 1**. `marks[5]` is out of bounds!
+- Loop over an array with a `for` loop and use the loop counter as the index.
+- C does not check bounds - reading past the end gives garbage, writing past it corrupts memory.
+@CODE
+#include <stdio.h>
+#define SIZE 5
+
+int main(void) {
+    int marks[SIZE] = {6, 2, 9, 4, 1};
+
+    marks[1] = 7;  // regrade student 1
+
+    for (int i = 0; i < SIZE; i++) {
+        printf("marks[%d] = %d\n", i, marks[i]);
+    }
+    return 0;
+}
+@ANALOGY
+An array is a row of numbered lockers in a corridor, starting at locker 0. The **index** is the locker number, the **element** is what is inside. Asking for locker 5 in a row of 5 means walking into the wall.
+@TIP
+Use a `#define` or `const` for the size, and always loop with `i < SIZE`. You cannot get the size of an array that was passed into a function - pass the size as an extra parameter.
+
+@LESSON Sum, max & search
+@TEXT
+Three algorithms you will write again and again:
+
+- **Sum / average**: accumulate in a loop, divide by the count (cast to `double`).
+- **Maximum**: start with the **first element** (not 0 - the values might all be negative) and replace it whenever you find something bigger. Keep the **index** if you need to know where it was.
+- **Linear search**: check each element; stop with `break` when found. Use `-1` to mean "not found".
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int qty[6] = {12, 40, 7, 40, 3, 25};
+    int sum = 0, maxIdx = 0, found = -1;
+
+    for (int i = 0; i < 6; i++) {
+        sum += qty[i];
+        if (qty[i] > qty[maxIdx]) maxIdx = i;
+        if (qty[i] == 7 && found == -1) found = i;
+    }
+    printf("avg %.2f\n", (double)sum / 6);
+    printf("max %d at %d\n", qty[maxIdx], maxIdx);
+    printf("7 found at %d\n", found);
+    return 0;
+}
+@ANALOGY
+Marking a pile of exams: go through the pile once. Add each mark to the running total, remember the best paper so far, and note the first paper with the mark you were looking for.
+@TIP
+With `>` the max keeps the **first** occurrence of a tie (index 1 above); with `>=` it would keep the last. Exams sometimes ask exactly that.
+
+@LESSON 2D arrays: rows and columns
+@TEXT
+A 2D array is a grid: `int seats[3][4];` has 3 rows and 4 columns (12 ints).
+
+- Access with two indices: `seats[row][col]`.
+- Initialise row by row: `{{1,2,3,4}, {5,6,7,8}, {9,10,11,12}}`.
+- Process with **nested loops**: outer over rows, inner over columns.
+- In memory the rows are stored one after another (row-major order).
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int score[2][3] = {{5, 0, 2},
+                      {1, 8, 4}};
+    for (int r = 0; r < 2; r++) {
+        int rowTotal = 0;
+        for (int c = 0; c < 3; c++) {
+            printf("%3d", score[r][c]);
+            rowTotal += score[r][c];
+        }
+        printf("  | student %d total %d\n", r, rowTotal);
+    }
+    return 0;
+}
+@ANALOGY
+A cinema seat ticket: `seats[row][col]` - first find the row, then the seat along it. A whole seating plan in one variable.
+@TIP
+`%3d` pads a number to 3 characters wide - handy for printing neat tables and grids in exam output questions.
+
+@LESSON Strings are char arrays
+@TEXT
+C has no string type. A string is a `char` array ending in the **null terminator** `'\0'`.
+
+- `char code[8] = "AB-12";` uses 6 chars: 5 letters + `'\0'`. Always leave room for it.
+- `#include <string.h>` for `strlen` (length without `'\0'`), `strcpy(dest, src)`, `strcat`, `strcmp`.
+- `strcmp(a, b)` returns **0 when equal**. You cannot compare strings with `==` (that compares addresses).
+- Read a whole line with `fgets(buf, sizeof buf, stdin)`; `scanf("%s", buf)` stops at the first space.
+@CODE
+#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    char part[20] = "gear";
+    char order[20];
+
+    strcpy(order, part);  // copy
+    strcat(order, "-box");  // append
+    printf("%s (%zu chars)\n", order, strlen(order));
+
+    if (strcmp(part, "gear") == 0)
+        printf("Match!\n");
+    return 0;
+}
+@ANALOGY
+A string is a train of single-letter carriages with a red **END** carriage (`'\0'`) at the back. Every string function walks along the train until it reaches END - lose it and they keep walking onto whatever is parked behind.
+@TIP
+`char name[5] = "Hello";` has no room for `'\0'` - printing it reads past the end. When asked "how big must the array be?", answer length + 1.
+
+@LAB Finding the best quiz score
+@INTRO
+Four quiz scores are stored in an array. The program finds the index of the best one using the "best so far" pattern. Watch `best` change only when a bigger value is found.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int score[4] = {6, 2, 9, 4};
+    int best = 0;
+    for (int i = 1; i < 4; i++) {
+        if (score[i] > score[best]) {
+            best = i;
+        }
+    }
+    printf("Best quiz: %d (%d marks)\n", best, score[best]);
+    return 0;
+}
+@STEP 3 | | score[0]=0; score[1]=0; score[2]=0; score[3]=0 | | Program starts.
+@STEP 4 | score={6,2,9,4} | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | The array is created and filled. Indices go 0 to 3.
+@STEP 5 | score={6,2,9,4}; best=0 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | Assume quiz 0 is the best until proven otherwise.
+@STEP 6 | score={6,2,9,4}; best=0; i=1 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | The loop starts at 1 - quiz 0 is already our best.
+@STEP 7 | score={6,2,9,4}; best=0; i=1 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `score[1] > score[0]` -> `2 > 6` is false. Keep `best = 0`.
+@STEP 6 | score={6,2,9,4}; best=0; i=2 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `i++` -> 2, `2 < 4` true.
+@STEP 7 | score={6,2,9,4}; best=0; i=2 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `9 > 6` is **true**.
+@STEP 8 | score={6,2,9,4}; best=2; i=2 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `best` now remembers index 2 (not the value 9).
+@STEP 6 | score={6,2,9,4}; best=2; i=3 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `i` -> 3.
+@STEP 7 | score={6,2,9,4}; best=2; i=3 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `4 > 9` false.
+@STEP 6 | score={6,2,9,4}; best=2; i=4 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | `i` -> 4, `4 < 4` false. Loop ends - we never touch `score[4]`, which does not exist.
+@STEP 11 | score={6,2,9,4}; best=2 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | Best quiz: 2 (9 marks)\n | Storing the index lets us print both where it is and what it holds.
+@STEP 12 | score={6,2,9,4}; best=2 | score[0]=6; score[1]=2; score[2]=9; score[3]=4 | | Done.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a[5] = {4, 8, 15, 16, 23};
+printf("%d", a[2]);
+@OPT 15
+@OPT 8
+@OPT 16
+@OPT 2
+@ANSWER 0
+@EXPLAIN
+Indexing starts at 0: `a[0]` is 4, `a[1]` is 8, `a[2]` is 15.
+
+@Q MCQ
+@PROMPT
+After `int score[10];`, which indices are valid?
+@OPT 0 to 9
+@OPT 1 to 10
+@OPT 0 to 10
+@OPT 1 to 9
+@ANSWER 0
+@EXPLAIN
+An array of size N has indices 0 to N - 1. `score[10]` is one past the end and is undefined behaviour.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a[4] = {1, 2};
+printf("%d %d", a[1], a[3]);
+@OPT 2 0
+@OPT 2 garbage
+@OPT 1 2
+@OPT Compile error
+@ANSWER 0
+@EXPLAIN
+When an initialiser list is shorter than the array, the remaining elements are set to 0. So the array is {1, 2, 0, 0}.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a[] = {3, 5, 7};
+int s = 0;
+for (int i = 0; i < 3; i++)
+    s += a[i];
+printf("%d", s);
+@OPT 15
+@OPT 7
+@OPT 10
+@OPT 0
+@ANSWER 0
+@EXPLAIN
+3 + 5 + 7 = 15. When you give an initialiser you may leave the size out - the compiler counts 3 elements.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+char name[20] = "Code";
+printf("%d", (int)strlen(name));
+@OPT 4
+@OPT 5
+@OPT 20
+@OPT 3
+@ANSWER 0
+@EXPLAIN
+`strlen` counts characters up to (not including) the `'\0'`. The array size (20) is irrelevant.
+
+@Q MCQ
+@PROMPT
+How do you correctly test whether C strings `a` and `b` contain the same text?
+@OPT `strcmp(a, b) == 0`
+@OPT `a == b`
+@OPT `strcmp(a, b) == 1`
+@OPT `strlen(a) == strlen(b)`
+@ANSWER 0
+@EXPLAIN
+`strcmp` returns 0 when the strings are equal (negative / positive tells you the order). `a == b` compares the **addresses** of the two arrays, which are always different.
+
+@Q BUG
+@PROMPT
+This program should total 5 quantities, but sometimes prints a weird number. Which line is wrong?
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int qty[5] = {3, 1, 4, 1, 5};
+    int total = 0;
+    for (int i = 0; i <= 5; i++) {
+        total += qty[i];
+    }
+    printf("Total: %d\n", total);
+    return 0;
+}
+@ANSWER 6
+@EXPLAIN
+`i <= 5` lets `i` reach 5, and `qty[5]` is past the end of the array. The condition must be `i < 5`.
+
+@Q FILL
+@PROMPT
+Given `int grid[3][4];` write the expression for the element in row 1, column 2:  `int x = ___;`
+@ANSWER grid[1][2]
+@EXPLAIN
+Row first, then column: `grid[1][2]`. Both indices start at 0, so this is the 2nd row, 3rd column.
+
+@Q FILL
+@PROMPT
+Store the **third** element of the array `arr` in `x`:  `int x = ___;`
+@ANSWER arr[2]
+@EXPLAIN
+The third element has index 2, because the first is `arr[0]`.
+
+@Q MCQ
+@PROMPT
+Why is `char code[6] = "AB-123";` a problem?
+@OPT The string needs 7 chars: 6 visible characters plus the `'\0'` terminator
+@OPT `-` is not allowed in a string
+@OPT Strings must be declared with `string`, not `char`
+@OPT Nothing is wrong
+@ANSWER 0
+@EXPLAIN
+Every C string needs one extra byte for `'\0'`. With no terminator, `printf("%s")` and `strlen` keep reading past the end of the array.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int g[2][3] = {{1, 2, 3},
+               {4, 5, 6}};
+printf("%d", g[1][0]);
+@OPT 4
+@OPT 2
+@OPT 1
+@OPT 5
+@ANSWER 0
+@EXPLAIN
+Row 1 is the second row `{4, 5, 6}`; column 0 is its first element, 4.

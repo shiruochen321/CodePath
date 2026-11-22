@@ -1,0 +1,320 @@
+@@ Chapter 6 - Structs, Memory & Files
+@MODULE 6
+@CHAPTER Structs, Memory & Files
+@TOPIC Structs, malloc/new & File I/O
+@BLURB Group related data with `struct`, use `->` with pointers, allocate memory at run time with `malloc` / `new`, and save and load data with files.
+@COLOR 63,185,80
+
+@LESSON Structs
+@TEXT
+A `struct` groups variables of **different types** into one new type.
+
+- Define it once: `struct Student { char name[20]; int id; float avg; };` - note the `;` after `}`.
+- Create variables: `struct Student s = {"Ana", 304, 72.5f};`
+- Access members with the dot: `s.id`, `s.avg`.
+- Assigning one struct to another **copies** every member.
+- `typedef struct { ... } Student;` lets you write `Student s;` without the word `struct`.
+- Arrays of structs are how you store tables of records.
+@CODE
+#include <stdio.h>
+
+struct Student {
+    char name[20];
+    int id;
+    float avg;
+};
+
+int main(void) {
+    struct Student s = {"Ana", 304, 72.5f};
+    s.avg += 2.0f;
+    printf("%s (%d): %.1f\n", s.name, s.id, s.avg);
+
+    struct Student group[2] = {{"Ben", 101, 55.0f},
+                               {"Cara", 102, 81.0f}};
+    printf("%s\n", group[1].name);  // Cara
+    return 0;
+}
+@ANALOGY
+A struct is a form with labelled fields - name, ID, average. The struct definition is the blank form design; each variable is one filled-in copy.
+@TIP
+Forgetting the semicolon after the closing `}` of a struct definition gives confusing errors on the **next** line. Check it first.
+
+@LESSON Pointers to structs
+@TEXT
+Structs are often passed to functions by pointer, to avoid copying and to allow changes.
+
+- `struct Student *p = &s;`
+- `(*p).avg` works, but everyone writes the arrow: `p->avg`.
+- Rule: **dot** for a struct variable, **arrow** for a pointer to a struct.
+@CODE
+#include <stdio.h>
+
+typedef struct {
+    char name[20];
+    int credits;
+} Module;
+
+void addCredits(Module *m, int extra) {
+    m->credits += extra;  // same as (*m).credits
+}
+
+int main(void) {
+    Module prog = {"Programming", 5};
+    addCredits(&prog, 5);
+    printf("%s: %d\n", prog.name, prog.credits);  // 10
+    return 0;
+}
+@ANALOGY
+`p->credits` reads as "follow the pointer, then open the credits field". It is the address on an envelope plus the name of the drawer inside that house.
+@TIP
+Exam question pattern: given `Module *m`, which is correct - `m.credits`, `m->credits`, `*m.credits`? Only `m->credits` (or `(*m).credits`). `*m.credits` means `*(m.credits)`.
+
+@LESSON Dynamic memory: malloc and new
+@TEXT
+Sometimes you only know the size at run time. Ask for memory from the **heap**:
+
+- C: `int *a = malloc(n * sizeof(int));` - returns NULL on failure. Release with `free(a);`
+- C++: `int *a = new int[n];` released with `delete[] a;`. A single object: `new Student` / `delete p`.
+- Every allocation needs exactly **one** matching release. Forgetting it is a **memory leak**; using memory after freeing it is a **dangling pointer**.
+- `new[]` pairs with `delete[]`, `new` with `delete`, `malloc` with `free` - never mix them.
+@CODE
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    int n;
+    printf("How many marks? ");
+    scanf("%d", &n);
+
+    int *marks = malloc(n * sizeof(int));
+    if (marks == NULL) return 1;  // out of memory
+
+    for (int i = 0; i < n; i++) marks[i] = (i + 1) * 10;
+    printf("last = %d\n", marks[n - 1]);
+
+    free(marks);  // give it back
+    marks = NULL;
+    return 0;
+}
+@ANALOGY
+The heap is a library: `malloc` / `new` borrows a block of shelves, `free` / `delete` returns it. If nobody returns their books (a leak), eventually the library runs out of space.
+@TIP
+Always check `malloc`'s result for NULL, and set the pointer to NULL after `free` so an accidental second use fails loudly instead of silently corrupting memory.
+
+@LESSON Reading and writing files
+@TEXT
+C (`stdio.h`):
+- `FILE *f = fopen("marks.txt", "w");` - modes `"r"` read, `"w"` write (wipes the file), `"a"` append.
+- `fopen` returns **NULL** if it fails - always check.
+- `fprintf(f, ...)` and `fscanf(f, ...)` work like `printf` / `scanf`. `fclose(f)` when done.
+
+C++ (`<fstream>`):
+- `ofstream out("marks.txt");` then `out << x;`
+- `ifstream in("marks.txt");` then `while (in >> x) { ... }`
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    FILE *f = fopen("marks.txt", "w");
+    if (f == NULL) { printf("Cannot open file\n"); return 1; }
+    fprintf(f, "%d %d %d\n", 55, 72, 90);
+    fclose(f);
+
+    int a, b, c;
+    f = fopen("marks.txt", "r");
+    if (f == NULL) return 1;
+    fscanf(f, "%d %d %d", &a, &b, &c);
+    fclose(f);
+    printf("Total: %d\n", a + b + c);  // 217
+    return 0;
+}
+@ANALOGY
+A file is a notebook on the shelf. `fopen` takes it down (in pencil-mode `"r"`, rubber-it-out mode `"w"`, or add-a-page mode `"a"`), `fprintf` writes, `fscanf` reads, and `fclose` puts it back so nothing gets lost.
+@TIP
+This app itself loads every lesson and question from text files with `std::ifstream` - see `src/Content.cpp` for a real example of line-by-line parsing.
+
+@LAB Averaging an array of structs
+@INTRO
+Three students are stored as an array of `struct Student`. The loop adds up their marks to work out the class average. Watch the member access `group[i].mark` inside the loop.
+@CODE
+#include <stdio.h>
+
+struct Student {
+    char name[12];
+    int mark;
+};
+
+int main(void) {
+    struct Student group[3] = {
+        {"Ana", 72},
+        {"Ben", 48},
+        {"Cara", 90}
+    };
+    int sum = 0;
+    for (int i = 0; i < 3; i++) {
+        sum += group[i].mark;
+    }
+    printf("Average: %.1f\n", sum / 3.0);
+    return 0;
+}
+@STEP 8 | | Ana=0; Ben=0; Cara=0; sum=0 | | Program starts. The struct definition above created a type, not a variable.
+@STEP 9 | group[0]={Ana,72}; group[1]={Ben,48}; group[2]={Cara,90} | Ana=72; Ben=48; Cara=90; sum=0 | | The array of 3 structs is created and initialised record by record.
+@STEP 14 | group[0]={Ana,72}; group[1]={Ben,48}; group[2]={Cara,90}; sum=0 | Ana=72; Ben=48; Cara=90; sum=0 | | The accumulator starts at 0.
+@STEP 15 | sum=0; i=0 | Ana=72; Ben=48; Cara=90; sum=0 | | `i = 0`, `0 < 3` true.
+@STEP 16 | sum=72; i=0; group[0].mark=72 | Ana=72; Ben=48; Cara=90; sum=72 | | `group[0].mark` - index the array first, then use `.` to pick the member.
+@STEP 15 | sum=72; i=1 | Ana=72; Ben=48; Cara=90; sum=72 | | `i` -> 1.
+@STEP 16 | sum=120; i=1; group[1].mark=48 | Ana=72; Ben=48; Cara=90; sum=120 | | 72 + 48 = 120.
+@STEP 15 | sum=120; i=2 | Ana=72; Ben=48; Cara=90; sum=120 | | `i` -> 2.
+@STEP 16 | sum=210; i=2; group[2].mark=90 | Ana=72; Ben=48; Cara=90; sum=210 | | 120 + 90 = 210.
+@STEP 15 | sum=210; i=3 | Ana=72; Ben=48; Cara=90; sum=210 | | `3 < 3` false - loop ends.
+@STEP 18 | sum=210 | Ana=72; Ben=48; Cara=90; sum=210 | Average: 70.0\n | Dividing by `3.0` (a double) avoids integer division: 210 / 3.0 = 70.0.
+@STEP 19 | sum=210 | Ana=72; Ben=48; Cara=90; sum=210 | | Done.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+struct P { int qty; };
+struct P a = {5};
+struct P b = a;
+b.qty = 9;
+printf("%d", a.qty);
+@OPT 5
+@OPT 9
+@OPT 14
+@OPT Compile error
+@ANSWER 0
+@EXPLAIN
+`b = a` copies the whole struct. Changing `b.qty` afterwards does not affect `a`.
+
+@Q MCQ
+@PROMPT
+Given `struct Student *p`, how do you access its `id` member?
+@OPT `p->id`
+@OPT `p.id`
+@OPT `*p.id`
+@OPT `&p.id`
+@ANSWER 0
+@EXPLAIN
+Use the arrow with a pointer: `p->id`, which is shorthand for `(*p).id`. `*p.id` parses as `*(p.id)` and does not compile.
+
+@Q FILL
+@PROMPT
+Allocate memory for `n` ints in C:  `int *arr = ___(n * sizeof(int));`
+@ANSWER malloc | (int*)malloc | (int *)malloc
+@EXPLAIN
+`malloc(n * sizeof(int))` reserves room for n ints on the heap and returns a pointer to it (or NULL). Don't forget `free(arr)` later.
+
+@Q MCQ
+@PROMPT
+What must you do with memory obtained from `malloc` once you are finished with it?
+@OPT Call `free()` on it
+@OPT Nothing - C frees it automatically when the function ends
+@OPT Call `delete` on it
+@OPT Set the pointer to 0 - that releases it
+@ANSWER 0
+@EXPLAIN
+Heap memory lives until you release it with `free`. Forgetting is a memory leak. `delete` is for memory from C++ `new`.
+
+@Q BUG
+@PROMPT
+This C++ program has a memory bug. Which line?
+@CODE
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n = 5;
+    int *marks = new int[n];
+    for (int i = 0; i < n; i++)
+        marks[i] = i * 10;
+    cout << marks[4] << endl;
+    delete marks;
+    return 0;
+}
+@ANSWER 10
+@EXPLAIN
+Memory from `new[]` must be released with `delete[] marks;`. Plain `delete` on an array is undefined behaviour.
+
+@Q MCQ
+@PROMPT
+Which `fopen` mode adds new lines to the **end** of an existing file without erasing it?
+@OPT `"a"`
+@OPT `"w"`
+@OPT `"r"`
+@OPT `"x"`
+@ANSWER 0
+@EXPLAIN
+`"a"` (append) writes at the end. `"w"` creates the file or **wipes** an existing one; `"r"` is read-only.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+typedef struct { int x, y; } Pos;
+Pos p = {3, 4};
+Pos *q = &p;
+q->x = 8;
+printf("%d %d", p.x, p.y);
+@OPT 8 4
+@OPT 3 4
+@OPT 8 8
+@OPT 3 8
+@ANSWER 0
+@EXPLAIN
+`q` points at `p`, so `q->x = 8` changes `p.x`. `p.y` is unchanged.
+
+@Q MCQ
+@PROMPT
+What does `fopen` return if the file cannot be opened?
+@OPT `NULL`
+@OPT `0` bytes of data
+@OPT `-1`
+@OPT An empty file
+@ANSWER 0
+@EXPLAIN
+`fopen` returns a `NULL` pointer on failure (missing file, no permission ...). Always test `if (f == NULL)` before using it.
+
+@Q FILL
+@PROMPT
+C++: declare a stream that **writes** to "log.txt":  `___ out("log.txt");`
+@ANSWER ofstream | std::ofstream
+@EXPLAIN
+`ofstream` (output file stream, from `<fstream>`) writes; `ifstream` reads. Then use `out << value;` just like `cout`.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+struct Item { int q; };
+struct Item it[3] = {{2}, {4}, {6}};
+int s = 0;
+for (int i = 0; i < 3; i++)
+    s += it[i].q;
+printf("%d", s);
+@OPT 12
+@OPT 6
+@OPT 3
+@OPT 246
+@ANSWER 0
+@EXPLAIN
+The loop adds the `q` member of each struct: 2 + 4 + 6 = 12.
+
+@Q BUG
+@PROMPT
+This should print the first number stored in the file. Which line is wrong?
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    FILE *f = fopen("data.txt", "r");
+    if (f == NULL) return 1;
+    int value;
+    fscanf(f, "%d", value);
+    printf("%d\n", value);
+    fclose(f);
+    return 0;
+}
+@ANSWER 7
+@EXPLAIN
+Like `scanf`, `fscanf` needs the address of the variable: `fscanf(f, "%d", &value);`.

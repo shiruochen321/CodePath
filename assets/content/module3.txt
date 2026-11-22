@@ -1,0 +1,298 @@
+@@ Chapter 3 - Loops: repetition
+@MODULE 3
+@CHAPTER Loops
+@TOPIC for, while & do-while
+@BLURB Computers are brilliant at doing the same thing many times. Master `for`, `while` and `do-while`, `break` / `continue`, accumulators and nested loops.
+@COLOR 255,200,61
+
+@LESSON The for loop
+@TEXT
+Use `for` when you know how many times to repeat. It has three parts separated by `;`:
+
+- **init** - runs once: `int i = 0`
+- **condition** - checked before every pass: `i < 5`
+- **update** - runs after every pass: `i++`
+
+The loop body runs while the condition is true. A variable declared in the init only exists inside the loop.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    // print 5 seat labels: S0 .. S4
+    for (int i = 0; i < 5; i++) {
+        printf("S%d ", i);
+    }
+    printf("\n");
+
+    // count down in steps of 2
+    for (int t = 10; t > 0; t -= 2) {
+        printf("%d ", t);
+    }
+    return 0;
+}
+@ANALOGY
+A `for` loop is a gym set: "start at rep 1, keep going while reps <= 10, add one rep each time". All three settings are written in one place - the loop header - so you can see the whole plan at a glance.
+@TIP
+Count the passes: `for (i = 0; i < n; i++)` runs **n** times, `for (i = 1; i <= n; i++)` also runs n times. `i <= n` starting from 0 runs **n + 1** times - the classic off-by-one.
+
+@LESSON while and do-while
+@TEXT
+Use `while` when you don't know in advance how many passes you need - you loop until something happens.
+
+- `while (cond) { ... }` checks **before** each pass. It may run zero times.
+- `do { ... } while (cond);` checks **after** each pass. It always runs **at least once** - perfect for menus and input validation.
+- Something inside the loop must eventually make the condition false, or you have an **infinite loop**.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int stock = 50, days = 0;
+    while (stock > 0) {
+        stock -= 12;  // daily sales
+        days++;
+    }
+    printf("Sold out after %d days\n", days);
+
+    int qty;
+    do {
+        printf("Order qty (1-99): ");
+        scanf("%d", &qty);
+    } while (qty < 1 || qty > 99);
+    return 0;
+}
+@ANALOGY
+`while` is "keep stirring while the sauce is lumpy" - you check first, and might not stir at all. `do-while` is "taste it, then decide whether to add more salt" - you always taste at least once.
+@TIP
+Note the semicolon after `while (...)` in a `do-while` - it is required there, and forbidden after a normal `while (...)` header.
+
+@LESSON break, continue & accumulators
+@TEXT
+- `break` leaves the loop immediately.
+- `continue` skips the rest of this pass and jumps to the next one (in a `for`, the update still runs).
+- An **accumulator** is a variable that collects a result across passes: start it **before** the loop (`sum = 0`, `count = 0`, `max = first value`) and update it inside.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int sum = 0, count = 0;
+    for (int box = 1; box <= 10; box++) {
+        if (box % 3 == 0) continue;  // skip every 3rd box
+        if (box == 8) break;  // line stops at box 8
+        sum += box;
+        count++;
+    }
+    printf("sum=%d count=%d\n", sum, count);  // 19 5
+    return 0;
+}
+@ANALOGY
+Reading a playlist: `continue` is the skip button - this song is skipped but the playlist goes on. `break` is the stop button - the playlist ends. An accumulator is the counter showing total minutes listened.
+@TIP
+Initialise accumulators **outside** the loop. `int sum = 0;` placed inside the loop resets the total every pass - a very common exam mistake.
+
+@LESSON Nested loops & patterns
+@TEXT
+A loop inside a loop: the inner loop runs completely for **every** pass of the outer loop. Total passes = outer x inner.
+
+- Outer loop = rows, inner loop = columns is the standard pattern for grids, tables and star triangles.
+- `break` only exits the **innermost** loop it is in.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    // staircase of #
+    for (int row = 1; row <= 4; row++) {
+        for (int col = 1; col <= row; col++) {
+            printf("#");
+        }
+        printf("\n");
+    }
+    return 0;
+}
+@ANALOGY
+A clock: the minute hand (inner loop) goes all the way round 60 times for every single step of the hour hand (outer loop).
+@TIP
+Pattern questions are exam staples. Write a tiny table: row 1 -> 1 symbol, row 2 -> 2 ... and make the inner loop's limit depend on `row`.
+
+@LAB Exercises over four weeks
+@INTRO
+Each week you solve `week * 3` practice exercises. Follow the `for` loop round and round: watch `week` change, the condition being tested, and the accumulator `total` grow.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int total = 0;
+    for (int week = 1; week <= 4; week++) {
+        int solved = week * 3;
+        total += solved;
+        printf("Week %d: %d solved\n", week, solved);
+    }
+    printf("Total: %d\n", total);
+    return 0;
+}
+@STEP 3 | | solved=0; total=0 | | Program starts.
+@STEP 4 | total=0 | solved=0; total=0 | | The accumulator starts at 0 **before** the loop.
+@STEP 5 | total=0; week=1 | solved=0; total=0 | | Init `week = 1`, then test `1 <= 4` - true, enter the body.
+@STEP 6 | total=0; week=1; solved=3 | solved=3; total=0 | | `solved = 1 * 3`.
+@STEP 7 | total=3; week=1; solved=3 | solved=3; total=3 | | `total += solved` adds them to the running total.
+@STEP 8 | total=3; week=1; solved=3 | solved=3; total=3 | Week 1: 3 solved\n | Output for week 1.
+@STEP 5 | total=3; week=2 | solved=0; total=3 | | Update `week++` -> 2, test `2 <= 4` - true. (`solved` was destroyed at the end of the body.)
+@STEP 6 | total=3; week=2; solved=6 | solved=6; total=3 | | `solved = 2 * 3`.
+@STEP 7 | total=9; week=2; solved=6 | solved=6; total=9 | | Running total 3 + 6 = 9.
+@STEP 8 | total=9; week=2; solved=6 | solved=6; total=9 | Week 2: 6 solved\n | 
+@STEP 5 | total=9; week=3 | solved=0; total=9 | | `week` -> 3, `3 <= 4` - true.
+@STEP 6 | total=9; week=3; solved=9 | solved=9; total=9 | | 
+@STEP 7 | total=18; week=3; solved=9 | solved=9; total=18 | | 9 + 9 = 18.
+@STEP 8 | total=18; week=3; solved=9 | solved=9; total=18 | Week 3: 9 solved\n | 
+@STEP 5 | total=18; week=4 | solved=0; total=18 | | `week` -> 4, `4 <= 4` - still true (that is what `<=` is for).
+@STEP 6 | total=18; week=4; solved=12 | solved=12; total=18 | | 
+@STEP 7 | total=30; week=4; solved=12 | solved=12; total=30 | | 18 + 12 = 30.
+@STEP 8 | total=30; week=4; solved=12 | solved=12; total=30 | Week 4: 12 solved\n | 
+@STEP 5 | total=30; week=5 | solved=0; total=30 | | `week` -> 5, `5 <= 4` is **false**: the loop ends. The body ran exactly 4 times.
+@STEP 10 | total=30 | solved=0; total=30 | Total: 30\n | `week` no longer exists - it was scoped to the loop. `total` survives because it was declared outside.
+@STEP 11 | total=30 | solved=0; total=30 | | Done.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+for (int i = 0; i < 3; i++)
+    printf("%d ", i);
+@OPT 0 1 2
+@OPT 1 2 3
+@OPT 0 1 2 3
+@OPT 3
+@ANSWER 0
+@EXPLAIN
+`i` starts at 0 and the loop runs while `i < 3`: 0, 1, 2. When `i` becomes 3 the condition fails.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int i = 10;
+while (i > 0) {
+    i -= 3;
+}
+printf("%d", i);
+@OPT -2
+@OPT 1
+@OPT 0
+@OPT -3
+@ANSWER 0
+@EXPLAIN
+10 -> 7 -> 4 -> 1 -> -2. At 1 the condition is still true so one more subtraction happens, giving -2, then `-2 > 0` fails.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int n = 5;
+do {
+    printf("%d", n);
+    n++;
+} while (n < 5);
+@OPT 5
+@OPT Nothing
+@OPT 56789
+@OPT 6
+@ANSWER 0
+@EXPLAIN
+A `do-while` runs its body **before** checking. It prints 5, `n` becomes 6, then `6 < 5` is false and it stops.
+
+@Q MCQ
+@PROMPT
+How many times does the body of `for (int i = 1; i <= 10; i += 2)` run?
+@OPT 5
+@OPT 10
+@OPT 4
+@OPT 6
+@ANSWER 0
+@EXPLAIN
+`i` takes the values 1, 3, 5, 7, 9. The next value, 11, fails `i <= 10`. That is 5 passes.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+for (int i = 1; i <= 5; i++) {
+    if (i % 2 == 0) continue;
+    printf("%d", i);
+}
+@OPT 135
+@OPT 24
+@OPT 12345
+@OPT 1
+@ANSWER 0
+@EXPLAIN
+`continue` skips the `printf` for even numbers, so only the odd values 1, 3 and 5 are printed (with no spaces).
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+for (int r = 1; r <= 3; r++) {
+    for (int c = 1; c <= r; c++)
+        printf("*");
+    printf("\n");
+}
+@OPT *\n**\n***
+@OPT ***\n***\n***
+@OPT ***\n**\n*
+@OPT ******
+@ANSWER 0
+@EXPLAIN
+The inner loop runs `r` times, so row 1 has one star, row 2 two, row 3 three - a right-angled triangle.
+
+@Q BUG
+@PROMPT
+This should add 1 + 2 + 3 + 4 + 5 but it never finishes. Which line is wrong?
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int sum = 0;
+    for (int i = 1; i <= 5; i--) {
+        sum += i;
+    }
+    printf("Sum = %d\n", sum);
+    return 0;
+}
+@ANSWER 5
+@EXPLAIN
+`i--` makes `i` go 1, 0, -1, -2 ... so `i <= 5` is always true. The update should be `i++`.
+
+@Q FILL
+@PROMPT
+Make this loop run exactly 10 times, with `i` going from 0 to 9:  `for (int i = 0; i ___ 10; i++)`
+@ANSWER <
+@EXPLAIN
+`i < 10` stops when `i` reaches 10, so the values are 0..9 - ten passes. `<=` would give eleven.
+
+@Q MCQ
+@PROMPT
+Which loop always executes its body **at least once**?
+@OPT `do-while`
+@OPT `while`
+@OPT `for`
+@OPT All three
+@ANSWER 0
+@EXPLAIN
+`do-while` tests its condition at the bottom, after the body has already run. `for` and `while` test first and may run zero times.
+
+@Q FILL
+@PROMPT
+Complete the accumulator so `total` ends up as 1 + 2 + ... + n:  `for (int i = 1; i <= n; i++) total ___ i;`
+@ANSWER +=
+@EXPLAIN
+`total += i` is short for `total = total + i`. Remember to set `total = 0` before the loop.
+
+@Q MCQ
+@PROMPT
+A `break` statement sits inside the **inner** loop of two nested `for` loops. What happens when it runs?
+@OPT Only the inner loop ends; the outer loop continues with its next pass
+@OPT Both loops end immediately
+@OPT The program ends
+@OPT The current pass of the outer loop is skipped
+@ANSWER 0
+@EXPLAIN
+`break` exits only the innermost loop (or `switch`) that contains it. To leave both you need a flag variable, or move the loops into a function and `return`.

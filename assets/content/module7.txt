@@ -1,0 +1,342 @@
+@@ Chapter 7 - C++ & Classes
+@MODULE 7
+@CHAPTER C++ & Classes
+@TOPIC cout, classes, vector & inheritance
+@BLURB Move from C to C++: `cout` / `cin`, `std::string`, classes with constructors and encapsulation, `std::vector`, and a first look at inheritance.
+@COLOR 229,72,77
+
+@LESSON From C to C++
+@TEXT
+C++ keeps everything from C and adds a lot on top.
+
+- `#include <iostream>` and `using namespace std;`
+- Output: `cout << "Mark: " << m << endl;` Input: `cin >> m;` - no format specifiers, no `&`.
+- `string` (from `<string>`) is a real text type: `+` joins, `==` compares, `.length()` / `.size()` give the length.
+- `bool` with `true` / `false` is built in.
+- Compile with `g++ file.cpp -o file`.
+@CODE
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string name;
+    int mark;
+    cout << "Name: ";
+    cin >> name;
+    cout << "Mark: ";
+    cin >> mark;
+
+    string msg = name + (mark >= 40 ? " passed" : " failed");
+    cout << msg << " (" << msg.length() << " chars)" << endl;
+    return 0;
+}
+@ANALOGY
+`cout <<` is a pipe into the screen: each `<<` pushes the next item through, whatever its type. C++ works out the type for you - no more matching `%d` and `%f` by hand.
+@TIP
+`cin >> name` stops at the first space. To read a full line use `getline(cin, name);` - and if you used `cin >>` just before, call `cin.ignore()` first to skip the leftover newline.
+
+@LESSON Classes and objects
+@TEXT
+A **class** bundles data (member variables) and the functions that work on it (member functions / methods).
+
+- `private:` members can only be used inside the class. `public:` members can be used from anywhere.
+- Members of a `class` are **private by default**; members of a `struct` are public by default.
+- A **constructor** has the class name and no return type. It runs automatically when an object is created.
+- An **object** is one variable of the class type: `Student s("Ana", 72);`
+- Call methods with the dot: `s.print();`
+@CODE
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Student {
+private:
+    string name;
+    int mark;
+public:
+    // constructor with initialiser list
+    Student(string n, int m) : name(n), mark(m) {}
+    bool passed() const { return mark >= 40; }
+    void print() const {
+        cout << name << ": " << mark
+             << (passed() ? " pass" : " fail") << endl;
+    }
+};
+
+int main() {
+    Student a("Ana", 72), b("Ben", 35);
+    a.print();  // Ana: 72 pass
+    b.print();  // Ben: 35 fail
+    return 0;
+}
+@ANALOGY
+A class is a blueprint for a phone model; an object is one actual phone built from it. Every phone has the same buttons (public methods) but its own private contents (data), and you can only change the contents through the buttons.
+@TIP
+`: name(n), mark(m)` is a **member initialiser list** - the preferred way to set members in a constructor. `const` after a method means "this method does not change the object".
+
+@LESSON Encapsulation: getters & setters
+@TEXT
+Keep data `private` and give controlled access through `public` methods.
+
+- A **getter** returns a value: `int getMark() const { return mark; }`
+- A **setter** changes it **with validation**: reject a mark below 0 or above 100.
+- This is **encapsulation**: the class protects its own rules, so no other code can put it into an invalid state.
+- Trying to access a private member from `main` is a **compile error**.
+@CODE
+#include <iostream>
+using namespace std;
+
+class Grade {
+private:
+    int mark = 0;
+public:
+    int getMark() const { return mark; }
+    bool setMark(int m) {
+        if (m < 0 || m > 100) return false;  // guard the rule
+        mark = m;
+        return true;
+    }
+};
+
+int main() {
+    Grade g;
+    g.setMark(150);  // rejected
+    g.setMark(64);
+    cout << g.getMark() << endl;  // 64
+    // g.mark = 150;  // error: 'mark' is private
+    return 0;
+}
+@ANALOGY
+A bank account: you cannot reach into the vault and change your balance. You go to the counter (a public method), and the cashier checks the rules before anything changes.
+@TIP
+In written exam questions, "why make data private?" is answered with **encapsulation**: the object controls and validates its own data, and the inside can change later without breaking code that uses it.
+
+@LESSON vector and inheritance
+@TEXT
+`std::vector` (from `<vector>`) is a resizable array that manages its own memory.
+
+- `vector<int> v;` `v.push_back(5);` `v.size()` `v[i]` `v.pop_back();`
+- Range-based for: `for (int x : v) ...` - use `const T &` for big objects.
+
+**Inheritance** builds a new class from an existing one: `class Lab : public Module { ... };`
+- The child gets the parent's public members.
+- Mark a method `virtual` in the base class so a child can **override** it and the right version runs at run time (polymorphism).
+@CODE
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class Shape {
+public:
+    virtual double area() const { return 0; }
+    virtual ~Shape() {}
+};
+class Square : public Shape {
+    double s;
+public:
+    Square(double side) : s(side) {}
+    double area() const override { return s * s; }
+};
+
+int main() {
+    vector<int> marks = {55, 72};
+    marks.push_back(90);
+    for (int m : marks) cout << m << " ";  // 55 72 90
+    Square sq(3);
+    Shape &ref = sq;
+    cout << "\n" << ref.area() << endl;  // 9 (virtual!)
+    return 0;
+}
+@ANALOGY
+A `vector` is a playlist: add songs to the end and it grows by itself. Inheritance is "a sports car **is a** car": it gets everything a car has, and can do some things its own way.
+@TIP
+No `delete` is needed for a `vector` - it frees its memory automatically when it goes out of scope. Prefer it to `new int[n]` in C++ answers.
+
+@LAB A class that owns a vector
+@INTRO
+`Gradebook` is a small class with a private `vector<int>`. Watch the object being created, `add` pushing marks into the vector, and `total` looping over them with a range-based for.
+@CODE
+#include <iostream>
+#include <vector>
+using namespace std;
+
+class Gradebook {
+private:
+    vector<int> marks;
+public:
+    void add(int m) { marks.push_back(m); }
+    int total() const {
+        int t = 0;
+        for (int m : marks) t += m;
+        return t;
+    }
+};
+
+int main() {
+    Gradebook g;
+    g.add(55);
+    g.add(72);
+    cout << "Total: " << g.total() << endl;
+    return 0;
+}
+@STEP 17 | | marks[0]=0; marks[1]=0; t=0 | | Execution starts in `main`. The class definition above is only a blueprint.
+@STEP 18 | g.marks={} (size 0) | marks[0]=0; marks[1]=0; t=0 | | `Gradebook g;` creates an object. Its private vector starts empty.
+@STEP 19 | g.marks={} (size 0) | marks[0]=0; marks[1]=0; t=0 | | Call the public method `g.add(55)`.
+@STEP 9 | m=55; marks={55} (size 1) | marks[0]=55; marks[1]=0; t=0 | | Inside `add`: `push_back` appends 55 - the vector grows by itself.
+@STEP 20 | g.marks={55} | marks[0]=55; marks[1]=0; t=0 | | Back in `main`, call `g.add(72)`.
+@STEP 9 | m=72; marks={55,72} (size 2) | marks[0]=55; marks[1]=72; t=0 | | 72 is appended at the end.
+@STEP 21 | g.marks={55,72} | marks[0]=55; marks[1]=72; t=0 | | `cout` needs `g.total()`, so that method runs first.
+@STEP 11 | t=0 | marks[0]=55; marks[1]=72; t=0 | | `total` is `const` - it promises not to change the object. Local `t` starts at 0.
+@STEP 12 | t=55; m=55 | marks[0]=55; marks[1]=72; t=55 | | Range-based for: `m` takes each element in turn. First 55.
+@STEP 12 | t=127; m=72 | marks[0]=55; marks[1]=72; t=127 | | Then 72: 55 + 72 = 127.
+@STEP 13 | t=127 | marks[0]=55; marks[1]=72; t=127 | | Return 127 to the caller.
+@STEP 21 | g.marks={55,72} | marks[0]=55; marks[1]=72; t=0 | Total: 127\n | The chain of `<<` prints the text, then the returned value, then `endl`.
+@STEP 22 | g.marks={55,72} | marks[0]=55; marks[1]=72; t=0 | | When `main` ends, `g` is destroyed and the vector frees its memory automatically.
+
+@Q MCQ
+@PROMPT
+What is the default access level for members of a `class` in C++?
+@OPT `private`
+@OPT `public`
+@OPT `protected`
+@OPT It depends on the compiler
+@ANSWER 0
+@EXPLAIN
+Class members are `private` unless you say otherwise. In a `struct` they default to `public` - that is the only real difference between the two.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+vector<int> v = {4, 7};
+v.push_back(9);
+cout << v.size() << " " << v[2];
+@OPT 3 9
+@OPT 2 9
+@OPT 3 7
+@OPT 9 3
+@ANSWER 0
+@EXPLAIN
+`push_back` appends 9, so the vector is {4, 7, 9}: size 3, and index 2 holds 9.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+class Counter {
+public:
+    int value;
+    Counter() { value = 0; cout << "new "; }
+};
+int main() {
+    Counter a, b;
+    cout << a.value;
+}
+@OPT new new 0
+@OPT new 0
+@OPT 0
+@OPT new new 00
+@ANSWER 0
+@EXPLAIN
+The constructor runs once for **each** object created, so "new " prints twice, followed by `a.value`, which is 0.
+
+@Q MCQ
+@PROMPT
+Which statement about a constructor is correct?
+@OPT It has the same name as the class, no return type, and runs automatically when an object is created
+@OPT It must return `void`
+@OPT It must be called manually after creating an object
+@OPT A class can only have one constructor
+@ANSWER 0
+@EXPLAIN
+Constructors are named after the class, have no return type (not even `void`) and run automatically. You can overload them with different parameter lists.
+
+@Q FILL
+@PROMPT
+Complete the output statement:  `cout << "Mark: " << mark ___ endl;`
+@ANSWER <<
+@EXPLAIN
+Every item sent to `cout` needs its own `<<`, including `endl`.
+
+@Q BUG
+@PROMPT
+This program does not compile. Which line causes the error?
+@CODE
+#include <iostream>
+using namespace std;
+
+class Account {
+private:
+    double balance = 0;
+public:
+    void deposit(double amt) { balance += amt; }
+};
+
+int main() {
+    Account a;
+    a.deposit(50);
+    a.balance = 1000;
+    return 0;
+}
+@ANSWER 14
+@EXPLAIN
+`balance` is `private`, so `main` cannot touch it. Changes must go through public methods like `deposit` - that is encapsulation.
+
+@Q MCQ
+@PROMPT
+Why make member variables `private` and provide public methods to change them?
+@OPT Encapsulation: the class can validate changes and keep its data in a valid state
+@OPT Private variables use less memory
+@OPT Public variables are slower to access
+@OPT The compiler requires all variables to be private
+@ANSWER 0
+@EXPLAIN
+Encapsulation lets the class enforce its rules (e.g. no negative balance) and hides how the data is stored, so the internals can change without breaking other code.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+vector<string> words = {"int", "char"};
+for (const string &w : words)
+    cout << w.size();
+@OPT 34
+@OPT 2
+@OPT 7
+@OPT intchar
+@ANSWER 0
+@EXPLAIN
+The loop prints the length of each string with no separator: "int" has 3 characters, "char" has 4 - giving 34.
+
+@Q FILL
+@PROMPT
+Declare an empty vector of doubles called `prices`:  `___;`
+@ANSWER vector<double> prices | std::vector<double> prices
+@EXPLAIN
+`vector<double> prices;` (needs `#include <vector>`). Then add values with `prices.push_back(9.99);`.
+
+@Q MCQ
+@PROMPT
+Which keyword in a base class lets a derived class override a method so the correct version is chosen at run time?
+@OPT `virtual`
+@OPT `static`
+@OPT `const`
+@OPT `public`
+@ANSWER 0
+@EXPLAIN
+`virtual` enables dynamic dispatch (polymorphism): calling through a base reference or pointer runs the derived class's override.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+string a = "Hello", b = "C++";
+cout << a + " " + b << " " << a.length();
+@OPT Hello C++ 5
+@OPT HelloC++ 5
+@OPT Hello C++ 9
+@OPT Hello C++ 6
+@ANSWER 0
+@EXPLAIN
+`+` joins `std::string`s: "Hello C++". `a.length()` is the length of "Hello", which is 5.

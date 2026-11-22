@@ -1,0 +1,306 @@
+@@ Chapter 2 - Making Decisions: operators and decisions
+@MODULE 2
+@CHAPTER Making Decisions
+@TOPIC if, else, switch & logic
+@BLURB Programs choose what to do next. Learn relational and logical operators, `if` / `else`, `switch` and the classic decision bugs.
+@COLOR 255,138,31
+
+@LESSON Comparing & combining
+@TEXT
+A condition is any expression. In C, **0 means false** and **any non-zero value means true**.
+
+- Relational: `==` `!=` `<` `>` `<=` `>=` produce 1 (true) or 0 (false).
+- Logical: `&&` (and), `||` (or), `!` (not).
+- `&&` and `||` **short-circuit**: the right side is only evaluated if it can still change the answer.
+- `=` assigns, `==` compares. Mixing them up is the number one decision bug.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int weight = 42, fragile = 1;
+
+    printf("%d\n", weight > 40);  // 1
+    printf("%d\n", weight == 40);  // 0
+    printf("%d\n", weight > 40 && fragile); // 1
+    printf("%d\n", !fragile);  // 0
+    return 0;
+}
+@ANALOGY
+Think of airport security. `&&` is two checks in a row - you must pass both (passport **and** boarding pass). `||` is two open lanes - getting through either one is enough. If the first check already decides, the second one is skipped (short-circuit).
+@TIP
+`if (count != 0 && total / count > 5)` is safe: if `count` is 0, the division is never evaluated. Swap the order and you can crash with a division by zero.
+
+@LESSON if, else if, else
+@TEXT
+`if` runs a block only when its condition is true. Chain extra tests with `else if`, and catch everything else with `else`.
+
+- Conditions are checked **top to bottom**; the first true branch runs and the rest are skipped.
+- Always use braces `{ }` - without them only the **next single statement** belongs to the `if`.
+- The ternary operator is a compact if/else that produces a value: `cond ? a : b`.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int stock = 8;
+
+    if (stock == 0) {
+        printf("Out of stock\n");
+    } else if (stock < 10) {
+        printf("Low - reorder\n");
+    } else {
+        printf("OK\n");
+    }
+
+    printf("%s\n", stock > 0 ? "available" : "sold out");
+    return 0;
+}
+@ANALOGY
+An `if / else if / else` chain is like a grading scheme: check "70 or more?", then "55 or more?", then "40 or more?". The first rule that matches decides the grade and you stop reading. Anything that matches nothing falls into the `else`.
+@TIP
+Order matters: test the most specific condition first. `if (score >= 40) ... else if (score >= 70)` - the second branch can never run.
+
+@LESSON switch statements
+@TEXT
+`switch` compares one integer-type value (`int`, `char`, `enum`) against constant `case` labels.
+
+- Execution jumps to the matching `case` and runs **until a `break`** or the end of the switch.
+- Without `break`, it **falls through** into the next case - sometimes useful, usually a bug.
+- `default` handles any value with no matching case.
+- You cannot switch on a `double` or (in C) on a string.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    char room = 'B';
+
+    switch (room) {
+        case 'A':
+            printf("North gate\n");
+            break;
+        case 'B':
+        case 'C':
+            printf("South gate\n");  // B and C share this
+            break;
+        default:
+            printf("Unknown room\n");
+    }
+    return 0;
+}
+@ANALOGY
+A `switch` is a lift: you press a floor number and it opens the doors at that `case`. `break` is stepping out. Forget to step out and the lift carries on to the floors below.
+@TIP
+Exam trick questions love missing `break`s. Trace carefully: start at the matching `case` and keep printing until you hit `break` or `}`.
+
+@LESSON Classic decision traps
+@TEXT
+Spot these on sight:
+
+- `if (x = 5)` assigns 5 and is **always true**. You meant `==`.
+- `if (stock < 10);` - the semicolon is an empty statement; the block below always runs.
+- Missing braces: only the first line after `if` is conditional, whatever the indentation says.
+- `if (0.1 + 0.2 == 0.3)` - floating-point values are rarely exactly equal. Compare with a small tolerance.
+- `if (a < b < c)` does not mean what it does in maths. Use `a < b && b < c`.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int qty = 3;
+
+    if (qty = 0)  // BUG: assignment
+        printf("never\n");
+
+    if (qty > 5);  // BUG: stray semicolon
+        printf("always prints\n");
+
+    if (qty >= 1 && qty <= 9)  // correct range test
+        printf("single digit\n");
+    return 0;
+}
+@ANALOGY
+These bugs are like a smoke alarm with no battery: the check is there, it looks fine, but it never goes off (or it always does). Learn to spot them by eye.
+@TIP
+Compile with warnings on (`gcc -Wall`). Modern compilers warn about `if (x = 0)` and empty `if` bodies - free marks.
+
+@LAB Grading an exam mark
+@INTRO
+A student scored 58 in a test. The program turns the mark into a grade letter with an `if / else if` chain, then a `switch` prints the result. Watch which conditions are tested and which branches are skipped.
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int mark = 58;
+    char grade;
+    if (mark >= 70) {
+        grade = 'A';
+    } else if (mark >= 40) {
+        grade = 'P';
+    } else {
+        grade = 'F';
+    }
+    switch (grade) {
+        case 'A': printf("Distinction\n"); break;
+        case 'P': printf("Pass\n"); break;
+        default:  printf("Fail\n");
+    }
+    return 0;
+}
+@STEP 3 | | Unmarked=1; A=0; P=0; F=0 | | Program starts. One script is waiting to be graded.
+@STEP 4 | mark=58 | Unmarked=1; A=0; P=0; F=0 | | The mark is 58.
+@STEP 5 | mark=58; grade=? | Unmarked=1; A=0; P=0; F=0 | | `grade` is declared but not initialised - it holds garbage until we assign it.
+@STEP 6 | mark=58; grade=? | Unmarked=1; A=0; P=0; F=0 | | Test `58 >= 70` - **false** (0). The distinction branch is skipped.
+@STEP 8 | mark=58; grade=? | Unmarked=1; A=0; P=0; F=0 | | Next test `58 >= 40` - **true**. This branch runs.
+@STEP 9 | mark=58; grade='P' | Unmarked=1; A=0; P=0; F=0 | | `grade` becomes `'P'`. Because a branch ran, the `else` is skipped entirely.
+@STEP 13 | mark=58; grade='P' | Unmarked=1; A=0; P=0; F=0 | | `switch (grade)` jumps straight to the label matching `'P'`. Case `'A'` is not even looked at.
+@STEP 15 | mark=58; grade='P' | Unmarked=0; A=0; P=1; F=0 | Pass\n | Prints, then `break` exits the switch - so `default` does not run.
+@STEP 18 | mark=58; grade='P' | Unmarked=0; A=0; P=1; F=0 | | Graded. `return 0`.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int x = 5;
+if (x = 0)
+    printf("A");
+else
+    printf("B");
+@OPT B
+@OPT A
+@OPT AB
+@OPT Nothing - compile error
+@ANSWER 0
+@EXPLAIN
+`x = 0` is an **assignment**, not a comparison. It stores 0 in `x` and the expression's value is 0, which is false - so the `else` branch prints B.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a = 3, b = 7;
+if (a > 2 && b < 5)
+    printf("yes");
+else
+    printf("no");
+@OPT no
+@OPT yes
+@OPT yesno
+@OPT 1
+@ANSWER 0
+@EXPLAIN
+`a > 2` is true but `b < 5` is false (7 is not less than 5). `&&` needs both to be true, so the result is false.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int d = 2;
+switch (d) {
+    case 1: printf("one ");
+    case 2: printf("two ");
+    case 3: printf("three ");
+            break;
+    default: printf("other");
+}
+@OPT two three
+@OPT two
+@OPT two three other
+@OPT one two three
+@ANSWER 0
+@EXPLAIN
+Execution jumps to `case 2`, prints "two ", then **falls through** into case 3 because there is no `break`, prints "three " and only then hits `break`.
+
+@Q MCQ
+@PROMPT
+What is the value of `!(5 > 3)` in C?
+@OPT 0
+@OPT 1
+@OPT -1
+@OPT 5
+@ANSWER 0
+@EXPLAIN
+`5 > 3` is true, which C represents as 1. `!` flips it to 0 (false).
+
+@Q BUG
+@PROMPT
+The message should only print when stock is below 10 - but it always prints. Which line causes it?
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int stock = 12;
+    if (stock < 10);
+    {
+        printf("Reorder now!\n");
+    }
+    return 0;
+}
+@ANSWER 5
+@EXPLAIN
+The `;` straight after `if (stock < 10)` is an empty statement - that is the whole body of the `if`. The `{ ... }` block below is just a normal block that always runs.
+
+@Q FILL
+@PROMPT
+Both conditions must be true for the order to be accepted:  `if (qty >= 10 ___ qty <= 50)`
+@ANSWER &&
+@EXPLAIN
+`&&` is logical AND. `qty >= 10 && qty <= 50` is the standard way to test a range. (`&` is bitwise AND - it works by accident here but is not the same thing.)
+
+@Q MCQ
+@PROMPT
+Which of these **cannot** be used as the expression in a C `switch`?
+@OPT a `double`
+@OPT an `int`
+@OPT a `char`
+@OPT an `enum` value
+@ANSWER 0
+@EXPLAIN
+`switch` only works on integer types. `char` and `enum` are integers underneath. Floating-point values and strings need an `if / else if` chain instead.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int stock = 0;
+printf("%s", stock > 0 ? "in stock" : "sold out");
+@OPT sold out
+@OPT in stock
+@OPT 0
+@OPT in stock sold out
+@ANSWER 0
+@EXPLAIN
+The ternary `cond ? a : b` gives `a` when the condition is true and `b` otherwise. `0 > 0` is false, so it gives "sold out".
+
+@Q MCQ
+@PROMPT
+In `if (count != 0 && total / count > 5)`, why does the order of the two tests matter?
+@OPT If `count` is 0, `&&` stops early so the division by zero never happens
+@OPT `&&` always evaluates the right side first
+@OPT It doesn't - `&&` evaluates both sides anyway
+@OPT Division must always come second in C
+@ANSWER 0
+@EXPLAIN
+`&&` short-circuits: when the left side is false the whole result must be false, so the right side is skipped. That makes the left test a guard for the risky division.
+
+@Q FILL
+@PROMPT
+Stop this case from falling through into the next one:  `case 'A': printf("Room A"); ___;`
+@ANSWER break
+@EXPLAIN
+`break` exits the `switch`. Without it, execution continues straight into the code of the next `case`.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int score = 75;
+if (score >= 40)
+    printf("pass ");
+else if (score >= 70)
+    printf("distinction ");
+printf("done");
+@OPT pass done
+@OPT distinction done
+@OPT pass distinction done
+@OPT done
+@ANSWER 0
+@EXPLAIN
+The first true branch wins. `75 >= 40` is true, so "pass " prints and the `else if` is skipped - even though it is also true. The final `printf` is not part of the chain and always runs.

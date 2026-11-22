@@ -1,0 +1,305 @@
+@@ Chapter 5 - Functions & Pointers
+@MODULE 5
+@CHAPTER Functions & Pointers
+@TOPIC Parameters, &, * and references
+@BLURB Split programs into reusable functions, then meet the most famous topic in C: pointers. Covers pass-by-value, `&` and `*`, pointer arithmetic and C++ references.
+@COLOR 199,146,234
+
+@LESSON Writing functions
+@TEXT
+A function is a named, reusable block of code.
+
+- **Prototype** (declaration) before `main`: `int area(int w, int h);`
+- **Definition**: the body, with the code that runs.
+- **Parameters** receive copies of the arguments. `return` sends one value back.
+- `void` means "returns nothing". A function must be declared before it is called.
+- Variables declared inside a function are **local**: they disappear when it returns.
+@CODE
+#include <stdio.h>
+
+int area(int w, int h);  // prototype
+
+int main(void) {
+    int a = area(4, 3);
+    printf("Area: %d\n", a);  // Area: 12
+    return 0;
+}
+
+int area(int w, int h) {  // definition
+    return w * h;
+}
+@ANALOGY
+A function is a recipe card. The parameters are the ingredients you hand over, `return` is the finished dish handed back. You can cook the same recipe as often as you like without rewriting it.
+@TIP
+If the compiler says "implicit declaration of function", you called it before declaring it. Add a prototype above `main`.
+
+@LESSON Pass by value
+@TEXT
+C always passes arguments **by value**: the function receives a **copy**.
+
+- Changing a parameter inside the function does **not** change the caller's variable.
+- That is why a naive `swap(int a, int b)` does nothing to the caller.
+- To let a function change a caller's variable, pass its **address** (a pointer).
+@CODE
+#include <stdio.h>
+
+void addBonus(int mark) {
+    mark += 10;  // copy only
+    printf("inside: %d\n", mark); // 60
+}
+
+int main(void) {
+    int mark = 50;
+    addBonus(mark);
+    printf("outside: %d\n", mark); // still 50
+    return 0;
+}
+@ANALOGY
+Passing by value is giving someone a photocopy of your homework. They can scribble all over the copy - your original stays untouched.
+@TIP
+Exam output questions often hide this: a function "changes" a parameter but the value printed in `main` is the original.
+
+@LESSON Pointers: & and *
+@TEXT
+A **pointer** is a variable that holds a memory **address**.
+
+- `int *p;` declares a pointer to an int.
+- `&x` gives the address of `x`. `p = &x;` makes `p` point at `x`.
+- `*p` **dereferences**: it means "the int that p points to". `*p = 9;` changes `x`.
+- `NULL` means "points nowhere". Never dereference a NULL or uninitialised pointer.
+- Array names act like a pointer to element 0, and `p + 1` moves to the **next element** (not the next byte).
+@CODE
+#include <stdio.h>
+
+int main(void) {
+    int x = 4;
+    int *p = &x;  // p holds the address of x
+
+    printf("%d\n", *p); // 4
+    *p = 9;  // write through the pointer
+    printf("%d\n", x);  // 9
+
+    int a[3] = {10, 20, 30};
+    int *q = a;  // same as &a[0]
+    printf("%d\n", *(q + 2));  // 30
+    return 0;
+}
+@ANALOGY
+A pointer is a house address written on a piece of paper. `&x` is "look up the address of x's house". `*p` is "go to that address and open the door". With the address you can change what is inside the real house.
+@TIP
+Read declarations right to left: `int *p` - "p is a pointer to int". In `*p = 9` the `*` means dereference; in `int *p` it means "pointer type". Same symbol, two jobs.
+
+@LESSON Pointer parameters & references
+@TEXT
+Passing a pointer lets a function modify the caller's variables - the classic `swap`.
+
+- C: `void swap(int *a, int *b)` and call it with `swap(&x, &y);`
+- Arrays are always passed as a pointer to the first element, so a function can change array contents. Pass the size too.
+- **C++ references** do the same job with nicer syntax: `void swap(int &a, int &b)` and call `swap(x, y);`. A reference is another name for the same variable.
+@CODE
+#include <iostream>
+using namespace std;
+
+void swapPtr(int *a, int *b) { int t = *a; *a = *b; *b = t; }
+void swapRef(int &a, int &b) { int t = a;  a = b;  b = t; }
+
+int main() {
+    int x = 1, y = 2;
+    swapPtr(&x, &y);  // C style
+    cout << x << " " << y << endl;  // 2 1
+    swapRef(x, y);  // C++ style
+    cout << x << " " << y << endl;  // 1 2
+    return 0;
+}
+@ANALOGY
+A C++ reference is a nickname. If "Bob" is a reference to "Robert", anything you do to Bob happens to Robert - they are the same person, not a copy.
+@TIP
+Use `const int &x` (or `const T &`) for large parameters you do not want to copy and must not change - a favourite C++ exam point.
+
+@LAB Swapping two values with pointers
+@INTRO
+Two variables `a` and `b` are swapped by a function that receives their addresses. Watch the function reach back into `main`'s variables through the pointers.
+@CODE
+#include <stdio.h>
+
+void swap(int *pa, int *pb) {
+    int temp = *pa;
+    *pa = *pb;
+    *pb = temp;
+}
+
+int main(void) {
+    int a = 7;
+    int b = 3;
+    swap(&a, &b);
+    printf("a=%d b=%d\n", a, b);
+    return 0;
+}
+@STEP 9 | | a=0; b=0; temp=0 | | Program starts in `main`, not at the first function in the file.
+@STEP 10 | a=7 | a=7; b=0; temp=0 | | `a` is created with the value 7.
+@STEP 11 | a=7; b=3 | a=7; b=3; temp=0 | | `b` is created with 3.
+@STEP 12 | a=7; b=3; &a=0x1000; &b=0x1004 | a=7; b=3; temp=0 | | `swap(&a, &b)` passes the **addresses** of `a` and `b`, not their values.
+@STEP 4 | pa=0x1000 (a); pb=0x1004 (b); temp=7 | a=7; b=3; temp=7 | | Inside `swap`: `*pa` follows the address to `a`, so `temp = 7`.
+@STEP 5 | pa=0x1000 (a); pb=0x1004 (b); temp=7 | a=3; b=3; temp=7 | | `*pa = *pb` copies b's value into **a itself** - a is now 3.
+@STEP 6 | pa=0x1000 (a); pb=0x1004 (b); temp=7 | a=3; b=7; temp=7 | | `*pb = temp` puts the saved 7 into **b**.
+@STEP 7 | pa=0x1000 (a); pb=0x1004 (b); temp=7 | a=3; b=7; temp=0 | | `swap` returns. `pa`, `pb` and `temp` are local and are destroyed.
+@STEP 13 | a=3; b=7 | a=3; b=7; temp=0 | a=3 b=7\n | Back in `main` - the values really were swapped, because `swap` worked on the originals.
+@STEP 14 | a=3; b=7 | a=3; b=7; temp=0 | | Done. Try the quiz question where `swap(x, y)` is called without `&`!
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+void addTen(int s) {
+    s += 10;
+}
+int main(void) {
+    int s = 5;
+    addTen(s);
+    printf("%d", s);
+}
+@OPT 5
+@OPT 15
+@OPT 10
+@OPT garbage
+@ANSWER 0
+@EXPLAIN
+C passes by value: `addTen` changes its own copy of `s`. The `s` in `main` is untouched and still 5.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int x = 4;
+int *p = &x;
+*p = 9;
+printf("%d", x);
+@OPT 9
+@OPT 4
+@OPT the address of x
+@OPT 13
+@ANSWER 0
+@EXPLAIN
+`p` points at `x`, so `*p = 9` writes 9 into `x` itself.
+
+@Q MCQ
+@PROMPT
+In `int *p = &mark;` what does `&` do?
+@OPT It gives the memory address of `mark`
+@OPT It dereferences `mark`
+@OPT It means logical AND
+@OPT It makes `p` a reference
+@ANSWER 0
+@EXPLAIN
+The unary `&` is the **address-of** operator. The pointer `p` is initialised with the address where `mark` is stored.
+
+@Q FILL
+@PROMPT
+`p` is an `int *` pointing at a variable. Print the value it points to:  `printf("%d", ___);`
+@ANSWER *p
+@EXPLAIN
+`*p` dereferences the pointer, giving the int stored at that address. Printing `p` itself (with `%p`) would show the address.
+
+@Q BUG
+@PROMPT
+The values of `x` and `y` are not swapped. Which line is wrong?
+@CODE
+#include <stdio.h>
+
+void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main(void) {
+    int x = 1, y = 2;
+    swap(x, y);
+    printf("%d %d\n", x, y);
+    return 0;
+}
+@ANSWER 11
+@EXPLAIN
+`swap` expects addresses, so the call must be `swap(&x, &y);`. Passing the values makes the function treat 1 and 2 as addresses - a crash or garbage.
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int a[] = {10, 20, 30};
+int *p = a;
+p++;
+printf("%d", *p);
+@OPT 20
+@OPT 11
+@OPT 10
+@OPT 30
+@ANSWER 0
+@EXPLAIN
+`p` starts at `a[0]`. Pointer arithmetic moves by whole elements, so `p++` points at `a[1]`, which is 20.
+
+@Q MCQ
+@PROMPT
+Which C++ function header lets the function change the caller's `int` **without** using pointers?
+@OPT `void bonus(int &mark)`
+@OPT `void bonus(int mark)`
+@OPT `void bonus(int *mark)`
+@OPT `void bonus(const int mark)`
+@ANSWER 0
+@EXPLAIN
+`int &mark` is a C++ **reference** - another name for the caller's variable. `int *` would work too, but that is a pointer.
+
+@Q OUTPUT
+@PROMPT
+What does this C++ program print?
+@CODE
+void twice(int &q) {
+    q = q * 2;
+}
+int main() {
+    int q = 6;
+    twice(q);
+    cout << q;
+}
+@OPT 12
+@OPT 6
+@OPT 36
+@OPT 8
+@ANSWER 0
+@EXPLAIN
+`q` is passed by reference, so `twice` doubles `main`'s `q` directly: 6 * 2 = 12.
+
+@Q MCQ
+@PROMPT
+When you pass an array to a function in C, what actually gets passed?
+@OPT A pointer to its first element - the size must be passed separately
+@OPT A full copy of the array
+@OPT The number of elements
+@OPT Only the last element
+@ANSWER 0
+@EXPLAIN
+The array "decays" to a pointer to element 0. That is why `sizeof(arr)` inside the function gives the size of a pointer, and why the function can modify the caller's array.
+
+@Q FILL
+@PROMPT
+Complete the body of `int square(int n)` so it returns n squared:  `return ___;`
+@ANSWER n*n | n * n
+@EXPLAIN
+`return n * n;`. (In C, `^` is bitwise XOR, not "to the power of".)
+
+@Q OUTPUT
+@PROMPT
+What does this print?
+@CODE
+int x = 3, y = 8;
+int *p = &x;
+p = &y;
+*p = *p + 1;
+printf("%d %d", x, y);
+@OPT 3 9
+@OPT 4 8
+@OPT 4 9
+@OPT 3 8
+@ANSWER 0
+@EXPLAIN
+`p` first points at `x` but is then re-pointed at `y`. Only `y` is incremented, so x stays 3 and y becomes 9.
